@@ -1,6 +1,7 @@
 /**
  * WordPress Dummy Post Generator
  * @url https://github.com/rogerhub/wp-dummy-post-generator
+ * @license GPLv2
  */
 var wp_dummy_post_generator_category_count = -1;
 var wp_dummy_post_generator_num = 10;
