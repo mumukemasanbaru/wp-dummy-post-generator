@@ -383,12 +383,14 @@ class WP_Dummy_Post_Generator {
 		foreach ($categories as $category) {
 			if (!$leaf_only || $this->is_leaf($category)) {
 				for ($i = 0; $i < $n; $i++) {
+					$post_title = str_replace('.', '', $this->filler_text(1)); // Grab 1 sentence, and remove period
 					$opts = array(
 						'post_author' => $authors[array_rand($authors)],
 						'post_content' => $this->filler_text(5500),
 						'post_date' => $this->recent_date(),
+						'post_name' => sanitize_title($post_title),
 						'post_status' => 'draft',
-						'post_title' => str_replace('.', '', $this->filler_text(1)), // Grab 1 sentence, and remove period
+						'post_title' => $post_title,
 						'post_type' => 'post',
 					);
 					$op = wp_insert_post($opts, true);
