@@ -3,8 +3,8 @@ Contributors: rogerhub
 Donate link: http://www.vim.org/iccf/
 Tags: dummy, generator, filler, lorem ipsum, posts
 Requires at least: 3.1
-Tested up to: 3.5.1
-Stable tag: 
+Tested up to: 3.8
+Stable tag: 0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,9 +35,20 @@ Here's an example:
 
 == Screenshots ==
 
-None yet. I will upload them to the svn repository.
+1. The control panel of the WP Dummy Posts plugin.
 
 == Changelog ==
+
+= 0.4 =
+Fixed bug with post slugs not being generated
+
+= 0.2 =
+Followed nourmaan's suggestions for more realistic posts. Added:
+
+ - Different block types (paragraph, list, image, blockquote)
+ - Shorter titles (distributed between 4~6 words)
+ - New source text
+ - Markup inside paragraphs to test styles (BOLD, italic, CODE, del, ins, etc..)
 
 = 0.1 =
 Initial Release

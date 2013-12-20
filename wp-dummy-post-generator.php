@@ -3,7 +3,7 @@
  * Plugin Name: WordPress Dummy Post Generator
  * Plugin URI: https://www.github.com/rogerhub/wp-dummy-post-generator
  * Description: This WordPress plugin generates dummy posts. It can also be configured to create categories, clear the database, and set settings.
- * Version: 0.1
+ * Version: 0.4
  * Author: Roger Chen
  * Author URI: http://rogerhub.com
  * License: GPL2
@@ -383,10 +383,10 @@ class WP_Dummy_Post_Generator {
 		foreach ($categories as $category) {
 			if (!$leaf_only || $this->is_leaf($category)) {
 				for ($i = 0; $i < $n; $i++) {
-					$post_title = str_replace('.', '', $this->filler_text(1)); // Grab 1 sentence, and remove period
+					$post_title = str_replace('.', '', $this->filler_text('title'));
 					$opts = array(
 						'post_author' => $authors[array_rand($authors)],
-						'post_content' => $this->filler_text(5500),
+						'post_content' => $this->filler_text('post'),
 						'post_date' => $this->recent_date(),
 						'post_name' => sanitize_title($post_title),
 						'post_status' => 'draft',
@@ -424,32 +424,151 @@ class WP_Dummy_Post_Generator {
 		return date('Y-m-d H:i:s', time() - rand(0, 30*24*60*60)); // Last 30 days
 	}
 	/**
+	 * Get random element of array
+	 */
+	protected function array_random_value($a) {
+		$index = array_rand($a);
+		return $a[$index];
+	}
+	/**
 	 * Helper function that generates filler text
 	 *
-	 * @param $length is target length in characters
+	 * @param $type is target length in characters
 	 */
-	protected function filler_text($length) {
-		$lipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam at eros sem. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae. Duis tempus, eros eget semper varius, orci purus consectetur magna, id aliquam tortor tellus in turpis. Nullam sed nunc in libero laoreet euismod molestie sed nulla. Vivamus ac egestas elit. Curabitur sagittis lectus vitae orci consectetur porta. Nullam at arcu diam. Cras mattis ultrices convallis. In vitae molestie justo. Vivamus dolor lacus, ullamcorper vel imperdiet nec, accumsan id est. Aenean lobortis imperdiet mauris id convallis. Phasellus fringilla euismod lorem in convallis. Donec ornare aliquet neque vel congue. Praesent lobortis, elit ut eleifend feugiat, tellus nisl blandit arcu, eget elementum odio ante nec est. Pellentesque facilisis, nunc sit amet auctor ultrices, sapien urna vulputate nisi, sit amet auctor enim nisl eu odio. Maecenas in mi eget sapien ultrices ullamcorper. Nulla facilisi. Etiam scelerisque, diam nec consequat facilisis, mauris diam gravida nunc, nec commodo tellus purus nec diam. Fusce et turpis est. Nulla facilisi. Vivamus fringilla laoreet urna. Proin vitae nulla dolor, id tempor dui. Maecenas quam enim, sollicitudin eu varius eget, semper ac elit. Aliquam erat volutpat. Phasellus et arcu non arcu consectetur malesuada. Donec nec felis mauris, nec mattis neque. Nulla pellentesque commodo magna sit amet pretium. Curabitur varius cursus nunc ac vehicula. Duis vitae orci sem, at elementum massa. Sed a tincidunt nulla. Nunc in neque sapien. Duis suscipit consectetur pharetra. Sed commodo tristique tempor. Sed nulla lorem, molestie in scelerisque non, pharetra vel est. Nam cursus porttitor dui quis facilisis. Vivamus interdum rhoncus velit, condimentum placerat lacus rhoncus ac. Pellentesque a enim tellus. Vestibulum ullamcorper orci et lacus ultrices non ultricies tortor dignissim. Nulla facilisi. Aenean nisi diam, pellentesque sed vulputate eu, adipiscing a risus. Morbi turpis sem, viverra sed tincidunt dapibus, adipiscing in justo. Curabitur eu tortor sed tortor tristique convallis. Fusce porta justo condimentum est suscipit in lobortis neque ultricies. Nam condimentum eros vel dolor eleifend eleifend. Integer sit amet ipsum odio, eget sodales neque. Sed vel orci quis dui faucibus bibendum. Sed dictum sagittis massa ut venenatis. Aliquam eleifend orci nec urna tincidunt adipiscing. Nulla massa purus, bibendum ut pulvinar quis, cursus cursus ligula. Vestibulum mattis ligula in est viverra eget tempus massa congue. Vivamus mattis sagittis eros, aliquam pellentesque magna pharetra id. Sed in ipsum in felis commodo pellentesque sed vel sem. Etiam sit amet libero felis, at imperdiet sapien. Nam ac enim augue. Fusce molestie eros risus. Vivamus interdum lorem eros.";
-		$lipsum = explode('. ', $lipsum);
-		$text = '';
-		$breaks = rand(250, 800);
-		for (;;) {
-			$sentence = $lipsum[array_rand($lipsum)].'.';
-			$text .= $sentence;
-			$breaks -= strlen($sentence);
-			if (strlen($text) > $length) {
-				break;
-			} else if ($breaks < 0) {
-				// Will never insert a paragraph break at the end of the text
-				$text .= '\n\n';
-				$breaks += rand(250, 800);
+	protected function filler_text($type) {
+		
+		/**
+		 * Source text for lipsum
+		 */
+		static $lipsum_source = array(
+			"Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+			"Aliquam <a href='/'>sodales blandit felis</a>, vitae imperdiet nisl",
+			"Aliquam erat volutpat",
+			"Nam luctus dapibus sagittis",
+			"Curabitur pellentesque vel orci sed sagittis",
+			"Nulla iaculis lacus in <a href='/'>ligula sollicitudin tincidunt</a>",
+			"Ut mattis arcu ut risus pellentesque porta",
+			"Mauris tempus, elit ut <a href='/'>fringilla auctor</a>, mauris tellus pellentesque dui, ut blandit turpis nulla vel quam",
+			"Praesent feugiat eros in leo lacinia sollicitudin",
+			"Duis facilisis tempus turpis at sollicitudin",
+			"Phasellus sapien massa, vulputate ut tellus accumsan, tempor rutrum augue",
+			"Cras eget ipsum non tellus consectetur condimentum",
+			"Nunc metus quam, volutpat ut vestibulum vel, rhoncus et purus",
+			"Donec ullamcorper volutpat lectus a egestas",
+			"<a href='/'>Quisque interdum</a>, metus ut posuere aliquet, elit arcu lacinia ipsum, sit <a href='/'>amet eleifend lacus</a> quam id felis",
+			"Ut ullamcorper eget orci id tincidunt",
+			"Maecenas placerat orci non lectus vestibulum convallis",
+			"Sed hendrerit, turpis ac consequat commodo, erat libero ultricies risus, id posuere <a href='/'>lectus tellus</a> vel neque",
+			"Donec id dui purus",
+			"Vestibulum id cursus magna",
+			"Vestibulum dictum leo vitae nulla fermentum ultrices",
+			"Curabitur tempor adipiscing tempor",
+			"Sed ultrices dictum velit ut elementum",
+			"<a href='/'>Aliquam</a> commodo lectus mauris, id pretium neque malesuada sit amet",
+			"Praesent non nunc lacinia, mattis elit ac, commodo sem",
+			"Quisque dignissim sapien nec pretium adipiscing",
+			"Nam vitae <strong>nisi auctor</strong>, mollis urna ut, tempor mauris",
+			"Nunc massa nulla, facilisis quis augue vitae, ornare rutrum nibh",
+			"Phasellus et turpis pulvinar, pulvinar urna at, condimentum lectus",
+			"Proin et ultricies dolor",
+			"Donec pellentesque sit amet nibh sed accumsan",
+			"Mauris facilisis <strong>odio consectetur enim rhoncus, sed ultrices dolor aliquam</strong>",
+			"Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+			"Pellentesque molestie <u>imperdiet nulla</u> id ultrices",
+			"Pellentesque euismod semper ornare",
+			"Proin id est eu <u>libero fermentum</u> blandit et a metus",
+			"Quisque quis tortor sit amet libero <em>dignissim cursus pharetra</em> ut lorem",
+			"Aliquam non <em>dignissim odio, id</em> sagittis enim",
+			"Aenean sed sem augue",
+			"Phasellus <code>semper tortor quis eleifend</code> tristique",
+			"Nullam ut interdum metus, a posuere velit",
+			"Proin dolor lorem, pharetra <code>sit amet</code> nunc a, suscipit bibendum velit",
+			"Suspendisse blandit risus vel sem placerat, nec sagittis magna auctor",
+			"Lorem ipsum <del>dolor sit amet</del> <ins>placerat</ins>, consectetur adipiscing elit",
+			"Fusce at faucibus ipsum",
+			"Sed <del>vulputate diam vitae velit</del> <ins>pharetra tempus</ins>",
+			"Morbi dolor sem, commodo ut metus sit amet, pulvinar ultrices sem",
+			"Nunc lobortis sollicitudin nulla, non semper lectus eleifend sed",
+			"Nullam consectetur, ligula at rutrum volutpat, quam elit tincidunt diam, a cursus felis nisl id augue",
+			"Vestibulum convallis pharetra mauris sed hendrerit",
+			"Ut non erat dui",
+			"Donec cursus nisi nisl, a vehicula velit adipiscing id",
+			"Nullam non metus odio",
+			"In placerat, purus quis fringilla tempor, eros mi dapibus justo, ut pellentesque justo ipsum nec felis",
+			"Maecenas mollis tortor nisi, sit amet ultrices nisl viverra sit amet",
+			"Fusce viverra quam adipiscing orci aliquet pellentesque",
+			"Praesent ut pretium nisi",
+			"Phasellus congue aliquam sem, quis lobortis mi hendrerit vel",
+			"Morbi lobortis nibh congue vehicula ornare",
+			"Praesent ac ipsum at ipsum consectetur ornare vitae quis nisi",
+			"Morbi ac odio magna",
+			"Interdum et malesuada fames ac ante ipsum primis in faucibus",
+			"Quisque ullamcorper aliquet ante, sit amet molestie magna auctor nec",
+		);
+		if ($type == 'title') {
+			// Titles average 3 to 6 words
+			$length = rand(3, 6);
+			$ret = "";
+			for ($i = 0; $i < $length; $i++) {
+				if (!$i) {
+					$ret = ucwords($this->array_random_value(explode(" ", strip_tags($this->array_random_value($lipsum_source))))) . ' ';
+				} else {
+					$ret .= strtolower($this->array_random_value(explode(" ", strip_tags($this->array_random_value($lipsum_source))))) . ' ';
+				}
 			}
+			return trim($ret);
+		} else if ($type == 'post') {
+			$ret = "";
+			$order = array('paragraph');
+			$order_length = rand(12, 19);
+			for ($n = 0; $n < $order_length; $n++) {
+				$choice = rand(0, 8);
+				switch ($choice) {
+				case 0: $order[] = 'list'; break;
+				case 1: $order[] = 'image'; break;
+				case 2: $order[] = 'blockquote'; break;
+				default: $order[] = 'paragraph'; break;
+				}
+			}
+			for ($n = 0; $n < count($order); $n++) {
+				switch ($order[$n]) {
+				case 'paragraph':
+					$length = rand(2,7);
+					$ret .= '<p>';
+					for ($i = 0; $i < $length; $i++) {
+						if ($i) $ret .= ' ';
+						$ret .= $this->array_random_value($lipsum_source) . '.';
+					}
+					$ret .= "</p>\n";
+					break;
+				case 'image':
+					$ret .= "<p><img src='http://placehold.it/900x580' /></p>\n";
+					break;
+				case 'list':
+					$tag = (rand(0, 1)) ? 'ul' : 'ol';
+					$ret .= "<$tag>\n";
+					$length = rand(2,5);
+					for ($i = 0; $i < $length; $i++) {
+						$ret .= "<li>" . $this->array_random_value($lipsum_source) . "</li>\n";
+					}
+					$ret .= "</$tag>\n";
+					break;
+				case 'blockquote':
+					$length = rand(2,7);
+					$ret .= '<blockquote><p>';
+					for ($i = 0; $i < $length; $i++) {
+						if ($i) $ret .= ' ';
+						$ret .= $this->array_random_value($lipsum_source) . '.';
+					}
+					$ret .= "</p></blockquote>\n";
+					break;
+				}
+			}
+			
+			return $ret;
 		}
-		if ($length == 1) {
-			return implode(' ', array_slice(explode(' ', $text), 0, rand(6, 15)));
-		}
-		return $text;
 	}
+	
 	/**
 	 * Removes all the categories
 	 */
@@ -472,6 +591,7 @@ class WP_Dummy_Post_Generator {
 			wp_delete_post($post->ID, true);
 		}
 	}
+
 }
 
 if (is_admin()) {
